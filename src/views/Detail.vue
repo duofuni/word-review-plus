@@ -1,18 +1,30 @@
 <template>
   <div class="detail">
     <header class="detail-header">
-      <button type="button" class="back" @click="goBack" aria-label="返回">‹</button>
+      <div class="header-left">
+        <button type="button" class="back" @click="goBack" aria-label="返回">‹</button>
+        <button
+          v-if="previousWordState"
+          type="button"
+          class="prev-word-chip"
+          @click="goBackToPrevious"
+        >
+          {{ previousWordState.word.word }}
+        </button>
+      </div>
       <div class="counts">
         <span class="count-item">剩余 {{ remainingCount }}</span>
       </div>
-      <router-link
-        v-if="lessonIndex"
-        :to="{ name: 'CutList', params: { lessonId: lessonIndex } }"
-        class="cut-list-link"
-        aria-label="当前课程已斩单词列表"
-      >
-        已斩
-      </router-link>
+      <div class="header-right">
+        <router-link
+          v-if="lessonIndex"
+          :to="{ name: 'CutList', params: { lessonId: lessonIndex } }"
+          class="cut-list-link"
+          aria-label="当前课程已斩单词列表"
+        >
+          已斩
+        </router-link>
+      </div>
     </header>
 
     <template v-if="current">
@@ -69,6 +81,13 @@ const feedback = ref(false)
 /** Word no's already done this session (answered or 斩), so 剩余 decreases as we go */
 const sessionDoneNos = ref(new Set())
 
+/** History of word states we left (so we can go back). Each: { word, options, correctIndex, chosenIndex, feedback } */
+const history = ref([])
+
+const previousWordState = computed(() =>
+  history.value.length > 0 ? history.value[history.value.length - 1] : null
+)
+
 const learnableWords = computed(() => {
   const list = lessons.value
   const lesson = list.find(l => l.index === lessonId.value)
@@ -97,6 +116,17 @@ function pickOptions(correctWord, allWords) {
   const opts = shuffle([{ meaning: correctWord.meaning, no: correctWord.no }, ...wrong])
   const idx = opts.findIndex(o => o.no === correctWord.no)
   return { options: opts.map(o => o.meaning), correctIndex: idx }
+}
+
+function pushCurrentToHistory() {
+  if (!current.value) return
+  history.value.push({
+    word: current.value,
+    options: [...options.value],
+    correctIndex: correctIndex.value,
+    chosenIndex: chosenIndex.value,
+    feedback: feedback.value,
+  })
 }
 
 function setNextWord() {
@@ -128,13 +158,29 @@ function choose(i) {
   feedback.value = true
   const correct = i === correctIndex.value
   if (correct) markSeen(current.value.no)
+  pushCurrentToHistory()
   setTimeout(() => setNextWord(), correct ? 400 : 1200)
 }
 
 function doCut() {
   if (!current.value) return
   cut(current.value.no)
+  pushCurrentToHistory()
   setNextWord()
+}
+
+function goBackToPrevious() {
+  const state = history.value.pop()
+  if (!state) return
+  const nextDone = new Set(sessionDoneNos.value)
+  if (current.value?.no != null) nextDone.delete(current.value.no)
+  nextDone.delete(state.word.no)
+  sessionDoneNos.value = nextDone
+  current.value = state.word
+  options.value = state.options
+  correctIndex.value = state.correctIndex
+  chosenIndex.value = state.chosenIndex
+  feedback.value = state.feedback
 }
 
 function goBack() {
@@ -144,11 +190,13 @@ function goBack() {
 onMounted(async () => {
   await fetchWords()
   sessionDoneNos.value = new Set()
+  history.value = []
   setNextWord()
 })
 
 watch(lessonId, () => {
   sessionDoneNos.value = new Set()
+  history.value = []
   setNextWord()
 })
 </script>
@@ -167,13 +215,30 @@ watch(lessonId, () => {
 }
 
 .detail-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
   padding: 12px 16px;
   padding-top: calc(12px + var(--safe-top));
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  justify-self: start;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  justify-self: end;
 }
 
 .back {
@@ -184,11 +249,26 @@ watch(lessonId, () => {
   margin: -4px -8px;
 }
 
+.prev-word-chip {
+  padding: 0 4px;
+  border: none;
+  background: transparent;
+  font-size: 0.875rem;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.prev-word-chip:hover {
+  opacity: 0.8;
+}
+
 .counts {
   display: flex;
-  gap: 12px;
+  justify-content: center;
   font-size: 0.875rem;
   color: var(--color-text-secondary);
+  justify-self: center;
 }
 
 .cut-list-link {
@@ -202,8 +282,7 @@ watch(lessonId, () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px 20px;
-  padding-bottom: 160px;
+  padding: 24px 20px 160px;
   min-height: 200px;
 }
 
