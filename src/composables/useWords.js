@@ -96,8 +96,9 @@ export function useWords() {
   async function fetchWords() {
     loading.value = true
     error.value = null
+    const base = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) || ''
     try {
-      const res = await fetch('/' + selectedBank.value)
+      const res = await fetch(base + selectedBank.value)
       if (!res.ok) throw new Error('Failed to load words')
       const data = await res.json()
       wordsData.value = data
