@@ -62,6 +62,15 @@ function persistSeen() {
   localStorage.setItem(getSeenKey(selectedBank.value), JSON.stringify([...seenSet.value]))
 }
 
+function shuffleWords(list) {
+  const arr = [...list]
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr
+}
+
 export function useWords() {
   const loading = ref(false)
   const error = ref(null)
@@ -101,7 +110,7 @@ export function useWords() {
       const res = await fetch(base + selectedBank.value)
       if (!res.ok) throw new Error('Failed to load words')
       const data = await res.json()
-      wordsData.value = data
+      wordsData.value = shuffleWords(data)
     } catch (e) {
       error.value = e.message
       wordsData.value = []

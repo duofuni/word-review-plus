@@ -18,6 +18,7 @@
             {{ bank.label }}
           </option>
         </select>
+        <router-link :to="{ name: 'WordBook' }" class="word-book-btn">单词本</router-link>
       </div>
     </header>
     <div v-if="loading" class="loading">加载中…</div>
@@ -112,6 +113,24 @@ onMounted(() => {
 .word-bank-select:focus {
   outline: none;
   border-color: var(--color-primary, #07c160);
+}
+
+.word-book-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-card);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.word-book-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .title {

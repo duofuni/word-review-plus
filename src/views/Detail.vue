@@ -47,7 +47,10 @@
       </div>
 
       <footer class="detail-footer">
-        <button type="button" class="btn-cut" @click="doCut">斩</button>
+        <div class="footer-actions">
+          <button v-if="continueState" type="button" class="btn-continue" @click="continueLearning">继续</button>
+          <button type="button" class="btn-cut" @click="doCut">斩</button>
+        </div>
       </footer>
     </template>
 
@@ -83,6 +86,7 @@ const sessionDoneNos = ref(new Set())
 
 /** History of word states we left (so we can go back). Each: { word, options, correctIndex, chosenIndex, feedback } */
 const history = ref([])
+const continueState = ref(null)
 
 const previousWordState = computed(() =>
   history.value.length > 0 ? history.value[history.value.length - 1] : null
@@ -129,6 +133,17 @@ function pushCurrentToHistory() {
   })
 }
 
+function snapshotCurrentState() {
+  return {
+    word: current.value,
+    options: [...options.value],
+    correctIndex: correctIndex.value,
+    chosenIndex: chosenIndex.value,
+    feedback: feedback.value,
+    sessionDoneNos: [...sessionDoneNos.value],
+  }
+}
+
 function setNextWord() {
   if (current.value) {
     sessionDoneNos.value = new Set([...sessionDoneNos.value, current.value.no])
@@ -154,6 +169,7 @@ function setNextWord() {
 
 function choose(i) {
   if (feedback.value) return
+  continueState.value = null
   chosenIndex.value = i
   feedback.value = true
   const correct = i === correctIndex.value
@@ -164,6 +180,7 @@ function choose(i) {
 
 function doCut() {
   if (!current.value) return
+  continueState.value = null
   cut(current.value.no)
   pushCurrentToHistory()
   setNextWord()
@@ -172,6 +189,7 @@ function doCut() {
 function goBackToPrevious() {
   const state = history.value.pop()
   if (!state) return
+  continueState.value = snapshotCurrentState()
   const nextDone = new Set(sessionDoneNos.value)
   if (current.value?.no != null) nextDone.delete(current.value.no)
   nextDone.delete(state.word.no)
@@ -183,6 +201,18 @@ function goBackToPrevious() {
   feedback.value = state.feedback
 }
 
+function continueLearning() {
+  const state = continueState.value
+  if (!state) return
+  current.value = state.word
+  options.value = state.options
+  correctIndex.value = state.correctIndex
+  chosenIndex.value = state.chosenIndex
+  feedback.value = state.feedback
+  sessionDoneNos.value = new Set(state.sessionDoneNos)
+  continueState.value = null
+}
+
 function goBack() {
   router.push({ name: 'Home' })
 }
@@ -191,12 +221,14 @@ onMounted(async () => {
   await fetchWords()
   sessionDoneNos.value = new Set()
   history.value = []
+  continueState.value = null
   setNextWord()
 })
 
 watch(lessonId, () => {
   sessionDoneNos.value = new Set()
   history.value = []
+  continueState.value = null
   setNextWord()
 })
 </script>
@@ -351,9 +383,7 @@ watch(lessonId, () => {
 
 .btn-cut {
   display: block;
-  width: 100%;
-  max-width: 120px;
-  margin: 0 auto;
+  min-width: 120px;
   padding: 12px 24px;
   font-size: 1rem;
   font-weight: 600;
@@ -366,6 +396,29 @@ watch(lessonId, () => {
 
 .btn-cut:hover {
   background: var(--color-danger);
+  color: #fff;
+}
+
+.footer-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.btn-continue {
+  min-width: 120px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: var(--color-card);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius);
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-continue:hover {
+  background: var(--color-primary);
   color: #fff;
 }
 

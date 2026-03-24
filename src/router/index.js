@@ -4,6 +4,7 @@ const routes = [
   { path: '/', name: 'Home', component: () => import('../views/Home.vue'), meta: { title: '首页' } },
   { path: '/lesson/:lessonId', name: 'Detail', component: () => import('../views/Detail.vue'), meta: { title: '学习' } },
   { path: '/lesson/:lessonId/cut-list', name: 'CutList', component: () => import('../views/CutList.vue'), meta: { title: '已斩单词' } },
+  { path: '/word-book', name: 'WordBook', component: () => import('../views/WordBook.vue'), meta: { title: '单词本' } },
 ]
 
 const router = createRouter({
