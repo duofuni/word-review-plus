@@ -3,6 +3,7 @@ import { ref, computed, shallowRef } from 'vue'
 const WORDS_PER_LESSON = 20
 const CUT_PREFIX = 'word-review-cut-'
 const SEEN_PREFIX = 'word-review-seen-'
+const ORDER_PREFIX = 'word-review-order-'
 const SELECTED_BANK_KEY = 'word-review-bank'
 
 /** Available word bank files in public/. Add more here when you add new JSON files. */
@@ -33,6 +34,9 @@ function getCutKey(bank) {
 }
 function getSeenKey(bank) {
   return SEEN_PREFIX + bank
+}
+function getOrderKey(bank) {
+  return ORDER_PREFIX + bank
 }
 
 function loadStorage() {
@@ -69,6 +73,31 @@ function shuffleWords(list) {
     ;[arr[i], arr[j]] = [arr[j], arr[i]]
   }
   return arr
+}
+
+function getStableShuffledWords(bankId, words) {
+  const ids = words.map(w => w.no)
+  const idSet = new Set(ids)
+
+  try {
+    const saved = localStorage.getItem(getOrderKey(bankId))
+    if (saved) {
+      const order = JSON.parse(saved)
+      const valid = Array.isArray(order) &&
+        order.length === ids.length &&
+        order.every(no => idSet.has(no))
+      if (valid) {
+        const byNo = new Map(words.map(w => [w.no, w]))
+        return order.map(no => byNo.get(no)).filter(Boolean)
+      }
+    }
+  } catch (_) {}
+
+  const shuffled = shuffleWords(words)
+  try {
+    localStorage.setItem(getOrderKey(bankId), JSON.stringify(shuffled.map(w => w.no)))
+  } catch (_) {}
+  return shuffled
 }
 
 export function useWords() {
@@ -110,7 +139,7 @@ export function useWords() {
       const res = await fetch(base + selectedBank.value)
       if (!res.ok) throw new Error('Failed to load words')
       const data = await res.json()
-      wordsData.value = shuffleWords(data)
+      wordsData.value = getStableShuffledWords(selectedBank.value, data)
     } catch (e) {
       error.value = e.message
       wordsData.value = []
