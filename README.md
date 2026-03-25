@@ -11,7 +11,7 @@ A Vue 3 word review app with lesson grid, word detail with multiple-choice meani
 ## Tech
 
 - Vue 3 (Composition API), Vue Router (hash history), Vite.
-- Word banks: drop any number of JSON files under `public/words/`. A Vite plugin writes `public/words/_manifest.json` listing them; the app loads that manifest at startup and builds the “选词库” dropdown. Progress and cut state live in `localStorage` (per bank id, e.g. `words/word.json`).
+- Word banks: drop any number of JSON files under `public/words/`. A Vite plugin writes `public/words/manifest.json` listing them; the app loads that manifest at startup and builds the “选词库” dropdown. Progress and cut state live in `localStorage` (per bank id, e.g. `words/word.json`).
 
 ## Run
 
@@ -28,11 +28,11 @@ Open http://localhost:5173 (hash routes: `/#/`, `/#/lesson/1`, `/#/lesson/1/cut-
 npm run build
 ```
 
-Output in `docs/` (see `vite.config.js`). Serve with any static host; `words/` and `_manifest.json` are emitted with the build.
+Output in `docs/` (see `vite.config.js`). Serve with any static host; `words/manifest.json` is emitted with the build.
 
 ## Word data
 
-Add JSON files under `public/words/` (not `_manifest.json`; that file is regenerated when you run `npm run dev` or `npm run build`). Example:
+Add JSON files under `public/words/` (not `manifest.json`; that file is regenerated when you run `npm run dev` or `npm run build`). Example:
 
 ```bash
 cp mybank.json public/words/mybank.json

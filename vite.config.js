@@ -3,16 +3,18 @@ import vue from '@vitejs/plugin-vue'
 import { copyFileSync, mkdirSync, readdirSync, writeFileSync } from 'fs'
 import { resolve } from 'path'
 
-/** Scan public/words/*.json (except _manifest.json) and write words/_manifest.json for runtime discovery. */
+/** Scan public/words/*.json (except manifest files) and write public/words/manifest.json for runtime discovery. */
 function wordsManifestPlugin() {
   const wordsDir = resolve(__dirname, 'public/words')
   function writeManifest() {
     mkdirSync(wordsDir, { recursive: true })
     const files = readdirSync(wordsDir)
-      .filter((f) => f.endsWith('.json') && f !== '_manifest.json')
+      .filter(
+        (f) => f.endsWith('.json') && f !== 'manifest.json' && f !== '_manifest.json',
+      )
       .sort()
     writeFileSync(
-      resolve(wordsDir, '_manifest.json'),
+      resolve(wordsDir, 'manifest.json'),
       `${JSON.stringify({ files }, null, 2)}\n`,
       'utf8',
     )

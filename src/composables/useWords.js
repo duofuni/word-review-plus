@@ -10,7 +10,7 @@ let wordsData = shallowRef([])
 let cutSet = ref(new Set())
 let seenSet = ref(new Set())
 
-/** Populated by initWordBanks() from public/words/_manifest.json */
+/** Populated by initWordBanks() from public/words/manifest.json */
 export const wordBanks = ref([])
 
 let selectedBank = ref('')
@@ -137,7 +137,11 @@ export async function initWordBanks() {
   const base =
     (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) || ''
   try {
-    const res = await fetch(`${base}words/_manifest.json`)
+    let res = await fetch(`${base}words/manifest.json`)
+    if (!res.ok) {
+      // Backward compatibility with older builds.
+      res = await fetch(`${base}words/_manifest.json`)
+    }
     if (!res.ok) throw new Error('manifest')
     const data = await res.json()
     const files = Array.isArray(data.files) ? data.files : []
