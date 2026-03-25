@@ -35,7 +35,7 @@ const { words, loading, error, fetchWords, wordBanks, selectedBank } = useWords(
 const shownNos = ref(new Set())
 
 const currentBankLabel = computed(() => {
-  const current = wordBanks.find(b => b.id === selectedBank.value)
+  const current = wordBanks.value.find((b) => b.id === selectedBank.value)
   return current ? current.label : ''
 })
 

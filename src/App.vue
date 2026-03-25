@@ -4,15 +4,6 @@
   </div>
 </template>
 
-<script setup>
-import { onMounted } from 'vue'
-import { initStorage } from './composables/useWords.js'
-
-onMounted(() => {
-  initStorage()
-})
-</script>
-
 <style scoped>
 .app {
   min-height: 100%;

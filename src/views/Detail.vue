@@ -2,7 +2,9 @@
   <div class="detail">
     <header class="detail-header">
       <div class="header-left">
-        <button type="button" class="back" @click="goBack" aria-label="返回">‹</button>
+        <button type="button" class="back" @click="goBack" aria-label="返回">
+          ‹
+        </button>
         <button
           v-if="previousWordState"
           type="button"
@@ -38,7 +40,11 @@
           :key="i"
           type="button"
           class="option-card"
-          :class="{ chosen: chosenIndex === i, correct: feedback && i === correctIndex, wrong: feedback && chosenIndex === i && i !== correctIndex }"
+          :class="{
+            chosen: chosenIndex === i,
+            correct: feedback && i === correctIndex,
+            wrong: feedback && chosenIndex === i && i !== correctIndex,
+          }"
           :disabled="!!feedback"
           @click="choose(i)"
         >
@@ -48,7 +54,14 @@
 
       <footer class="detail-footer">
         <div class="footer-actions">
-          <button v-if="continueState" type="button" class="btn-continue" @click="continueLearning">继续</button>
+          <button
+            v-if="continueState"
+            type="button"
+            class="btn-continue"
+            @click="continueLearning"
+          >
+            继续
+          </button>
           <button type="button" class="btn-cut" @click="doCut">斩</button>
         </div>
       </footer>
@@ -63,74 +76,86 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useWords, useCutWords, useSeenWords } from '../composables/useWords.js'
+import { ref, computed, watch, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import {
+  useWords,
+  useCutWords,
+  useSeenWords,
+} from "../composables/useWords.js";
 
-const route = useRoute()
-const router = useRouter()
-const lessonId = computed(() => Number(route.params.lessonId) || 1)
-const lessonIndex = lessonId
+const route = useRoute();
+const router = useRouter();
+const lessonId = computed(() => Number(route.params.lessonId) || 1);
+const lessonIndex = lessonId;
 
-const { lessons, fetchWords, WORDS_PER_LESSON } = useWords()
-const { cut, cutListForLesson } = useCutWords()
-const { markSeen, isSeen } = useSeenWords()
+const { lessons, fetchWords, WORDS_PER_LESSON } = useWords();
+const { cut, cutListForLesson } = useCutWords();
+const { markSeen, isSeen } = useSeenWords();
 
-const current = ref(null)
-const options = ref([])
-const chosenIndex = ref(null)
-const correctIndex = ref(0)
-const feedback = ref(false)
+const current = ref(null);
+const options = ref([]);
+const chosenIndex = ref(null);
+const correctIndex = ref(0);
+const feedback = ref(false);
 /** Word no's already done this session (answered or 斩), so 剩余 decreases as we go */
-const sessionDoneNos = ref(new Set())
+const sessionDoneNos = ref(new Set());
 
 /** History of word states we left (so we can go back). Each: { word, options, correctIndex, chosenIndex, feedback } */
-const history = ref([])
-const continueState = ref(null)
+const history = ref([]);
+const continueState = ref(null);
 
 const previousWordState = computed(() =>
   history.value.length > 0 ? history.value[history.value.length - 1] : null
-)
+);
 
 const learnableWords = computed(() => {
-  const list = lessons.value
-  const lesson = list.find(l => l.index === lessonId.value)
-  if (!lesson) return []
-  const cutInLesson = cutListForLesson(lessonId.value)
-  const cutNos = new Set(cutInLesson.map(c => c.no))
-  return lesson.words.filter(w => !cutNos.has(w.no))
-})
+  const list = lessons.value;
+  const lesson = list.find((l) => l.index === lessonId.value);
+  if (!lesson) return [];
+  const cutInLesson = cutListForLesson(lessonId.value);
+  const cutNos = new Set(cutInLesson.map((c) => c.no));
+  return lesson.words.filter((w) => !cutNos.has(w.no));
+});
 
-const remainingCount = computed(() =>
-  learnableWords.value.filter(w => !sessionDoneNos.value.has(w.no)).length
-)
+const remainingCount = computed(
+  () =>
+    learnableWords.value.filter((w) => !sessionDoneNos.value.has(w.no)).length
+);
 
 function shuffle(arr) {
-  const a = [...arr]
+  const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]]
+    [a[i], a[j]] = [a[j], a[i]];
   }
-  return a
+  return a;
 }
 
 function pickOptions(correctWord, allWords) {
-  const others = allWords.filter(w => w.no !== correctWord.no && w.meaning !== correctWord.meaning)
-  const wrong = shuffle(others).slice(0, 3).map(w => ({ meaning: w.meaning, no: w.no }))
-  const opts = shuffle([{ meaning: correctWord.meaning, no: correctWord.no }, ...wrong])
-  const idx = opts.findIndex(o => o.no === correctWord.no)
-  return { options: opts.map(o => o.meaning), correctIndex: idx }
+  const others = allWords.filter(
+    (w) => w.no !== correctWord.no && w.meaning !== correctWord.meaning
+  );
+  const wrong = shuffle(others)
+    .slice(0, 3)
+    .map((w) => ({ meaning: w.meaning, no: w.no }));
+  const opts = shuffle([
+    { meaning: correctWord.meaning, no: correctWord.no },
+    ...wrong,
+  ]);
+  const idx = opts.findIndex((o) => o.no === correctWord.no);
+  return { options: opts.map((o) => o.meaning), correctIndex: idx };
 }
 
 function pushCurrentToHistory() {
-  if (!current.value) return
+  if (!current.value) return;
   history.value.push({
     word: current.value,
     options: [...options.value],
     correctIndex: correctIndex.value,
     chosenIndex: chosenIndex.value,
     feedback: feedback.value,
-  })
+  });
 }
 
 function snapshotCurrentState() {
@@ -141,96 +166,98 @@ function snapshotCurrentState() {
     chosenIndex: chosenIndex.value,
     feedback: feedback.value,
     sessionDoneNos: [...sessionDoneNos.value],
-  }
+  };
 }
 
 function setNextWord() {
   if (current.value) {
-    sessionDoneNos.value = new Set([...sessionDoneNos.value, current.value.no])
+    sessionDoneNos.value = new Set([...sessionDoneNos.value, current.value.no]);
   }
-  const words = learnableWords.value.filter(w => !sessionDoneNos.value.has(w.no))
+  const words = learnableWords.value.filter(
+    (w) => !sessionDoneNos.value.has(w.no)
+  );
   if (!words.length) {
-    current.value = null
-    options.value = []
-    return
+    current.value = null;
+    options.value = [];
+    return;
   }
-  const list = lessons.value
-  const all = list.flatMap(l => l.words)
-  const newOnes = words.filter(w => !isSeen(w.no))
-  const pool = newOnes.length ? newOnes : words
-  const word = pool[Math.floor(Math.random() * pool.length)]
-  current.value = word
-  const { options: optTexts, correctIndex: cIdx } = pickOptions(word, all)
-  options.value = optTexts
-  correctIndex.value = cIdx
-  chosenIndex.value = null
-  feedback.value = false
+  const list = lessons.value;
+  const all = list.flatMap((l) => l.words);
+  const newOnes = words.filter((w) => !isSeen(w.no));
+  const pool = newOnes.length ? newOnes : words;
+  const word = pool[Math.floor(Math.random() * pool.length)];
+  current.value = word;
+  const { options: optTexts, correctIndex: cIdx } = pickOptions(word, all);
+  options.value = optTexts;
+  correctIndex.value = cIdx;
+  chosenIndex.value = null;
+  feedback.value = false;
 }
 
 function choose(i) {
-  if (feedback.value) return
-  continueState.value = null
-  chosenIndex.value = i
-  feedback.value = true
-  const correct = i === correctIndex.value
-  if (correct) markSeen(current.value.no)
-  pushCurrentToHistory()
-  setTimeout(() => setNextWord(), correct ? 400 : 1200)
+  if (feedback.value) return;
+  continueState.value = null;
+  chosenIndex.value = i;
+  feedback.value = true;
+  const correct = i === correctIndex.value;
+  if (correct) markSeen(current.value.no);
+  pushCurrentToHistory();
+  setTimeout(() => setNextWord(), correct ? 400 : 1200);
 }
 
 function doCut() {
-  if (!current.value) return
-  continueState.value = null
-  cut(current.value.no)
-  pushCurrentToHistory()
-  setNextWord()
+  if (!current.value) return;
+  continueState.value = null;
+  cut(current.value.no);
+  pushCurrentToHistory();
+  setNextWord();
 }
 
 function goBackToPrevious() {
-  const state = history.value.pop()
-  if (!state) return
-  continueState.value = snapshotCurrentState()
-  const nextDone = new Set(sessionDoneNos.value)
-  if (current.value?.no != null) nextDone.delete(current.value.no)
-  nextDone.delete(state.word.no)
-  sessionDoneNos.value = nextDone
-  current.value = state.word
-  options.value = state.options
-  correctIndex.value = state.correctIndex
-  chosenIndex.value = state.chosenIndex
-  feedback.value = state.feedback
+  const state = history.value.pop();
+  if (!state) return;
+  continueState.value = snapshotCurrentState();
+  const nextDone = new Set(sessionDoneNos.value);
+  if (current.value?.no != null) nextDone.delete(current.value.no);
+  nextDone.delete(state.word.no);
+  sessionDoneNos.value = nextDone;
+  current.value = state.word;
+  options.value = state.options;
+  correctIndex.value = state.correctIndex;
+  chosenIndex.value = state.chosenIndex;
+  feedback.value = state.feedback;
 }
 
 function continueLearning() {
-  const state = continueState.value
-  if (!state) return
-  current.value = state.word
-  options.value = state.options
-  correctIndex.value = state.correctIndex
-  chosenIndex.value = state.chosenIndex
-  feedback.value = state.feedback
-  sessionDoneNos.value = new Set(state.sessionDoneNos)
-  continueState.value = null
+  const state = continueState.value;
+  if (!state) return;
+  current.value = state.word;
+  options.value = state.options;
+  correctIndex.value = state.correctIndex;
+  chosenIndex.value = state.chosenIndex;
+  feedback.value = state.feedback;
+  sessionDoneNos.value = new Set(state.sessionDoneNos);
+  continueState.value = null;
 }
 
 function goBack() {
-  router.push({ name: 'Home' })
+  router.push({ name: "Home" });
 }
 
 onMounted(async () => {
-  await fetchWords()
-  sessionDoneNos.value = new Set()
-  history.value = []
-  continueState.value = null
-  setNextWord()
-})
+  await fetchWords();
+  sessionDoneNos.value = new Set();
+  history.value = [];
+  continueState.value = null;
+  setNextWord();
+});
 
 watch(lessonId, () => {
-  sessionDoneNos.value = new Set()
-  history.value = []
-  continueState.value = null
-  setNextWord()
-})
+  sessionDoneNos.value = new Set();
+  history.value = [];
+  continueState.value = null;
+  setNextWord();
+});
 </script>
 
 <style scoped>
@@ -342,6 +369,7 @@ watch(lessonId, () => {
   font-size: 0.9375rem;
   color: var(--color-text);
   transition: border-color 0.2s, background 0.2s;
+  margin-bottom: 6px;
 }
 
 .option-card:disabled {

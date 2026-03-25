@@ -11,7 +11,7 @@ A Vue 3 word review app with lesson grid, word detail with multiple-choice meani
 ## Tech
 
 - Vue 3 (Composition API), Vue Router (hash history), Vite.
-- Words loaded from `public/word.json`; progress and cut state in `localStorage`.
+- Word banks: drop any number of JSON files under `public/words/`. A Vite plugin writes `public/words/_manifest.json` listing them; the app loads that manifest at startup and builds the “选词库” dropdown. Progress and cut state live in `localStorage` (per bank id, e.g. `words/word.json`).
 
 ## Run
 
@@ -28,17 +28,17 @@ Open http://localhost:5173 (hash routes: `/#/`, `/#/lesson/1`, `/#/lesson/1/cut-
 npm run build
 ```
 
-Output in `dist/`. Serve with any static host; ensure `word.json` is copied to the same path as the built app (e.g. `dist/word.json` if you use `dist` as root).
+Output in `docs/` (see `vite.config.js`). Serve with any static host; `words/` and `_manifest.json` are emitted with the build.
 
 ## Word data
 
-`word.json` must be in `public/` for the dev server. If your source file is at project root, copy it:
+Add JSON files under `public/words/` (not `_manifest.json`; that file is regenerated when you run `npm run dev` or `npm run build`). Example:
 
 ```bash
-cp word.json public/word.json
+cp mybank.json public/words/mybank.json
 ```
 
-Format: array of `{ "no": number, "word": string, "meaning": string }`. Lessons are formed by grouping 20 words in order (lesson 1 = no 1–20, lesson 2 = 21–40, etc.).
+Format: array of `{ "no": number, "word": string, "meaning": string }`. Each lesson shows 20 words in a **stable shuffled** order per bank (stored in `localStorage`).
 
 ## Mobile
 
